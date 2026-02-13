@@ -32,8 +32,48 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    #tavus-video { display: none; width: 100%; height: 100%; }
+    #tavus-call {
+      display: none; width: 100%; height: 100%;
+      flex-direction: column;
+    }
+    #tavus-video { flex: 1; width: 100%; min-height: 0; }
     #tavus-video iframe { width: 100%; height: 100%; border: 0; }
+
+    #controls-bar {
+      display: flex; align-items: center; justify-content: center;
+      gap: 12px; padding: 8px 12px; background: #1a1a1a;
+      border-top: 1px solid #2a2a2a;
+    }
+    .ctrl-btn {
+      padding: 8px 20px; border-radius: 8px; border: none;
+      background: #fff197; color: #0a0a0a; font-size: 13px;
+      font-weight: 600; cursor: pointer; transition: opacity 0.2s;
+    }
+    .ctrl-btn:hover { opacity: 0.85; }
+    .ctrl-btn.end { background: #ff4d4d; color: white; }
+    .ctrl-btn.end:hover { opacity: 0.85; }
+
+    #chat-bar {
+      display: flex; align-items: center; gap: 8px;
+      padding: 10px 12px; background: #1a1a1a;
+      border-top: 1px solid #2a2a2a;
+    }
+    #chat-input {
+      flex: 1; padding: 10px 14px; border-radius: 8px;
+      border: 1px solid #333; background: #111; color: #fff;
+      font-size: 14px; outline: none;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    #chat-input::placeholder { color: #666; }
+    #chat-input:focus { border-color: #fff197; }
+    #chat-send {
+      padding: 10px 18px; border-radius: 8px; border: none;
+      background: #fff197; color: #0a0a0a; font-size: 14px;
+      font-weight: 600; cursor: pointer; white-space: nowrap;
+      transition: opacity 0.2s;
+    }
+    #chat-send:hover { opacity: 0.85; }
+    #chat-send:disabled { opacity: 0.4; cursor: not-allowed; }
   </style>
 </head>
 <body>
@@ -51,7 +91,18 @@
     <span style="color:#aaa;font-size:14px;">Connecting to Ava...</span>
   </div>
 
-  <div id="tavus-video"></div>
+  <div id="tavus-call">
+    <div id="tavus-video"></div>
+    <div id="controls-bar">
+      <button class="ctrl-btn" onclick="toggleMic()">🎤 Mute</button>
+      <button class="ctrl-btn" onclick="toggleCam()">📷 Camera</button>
+      <button class="ctrl-btn end" onclick="leaveCall()">Leave</button>
+    </div>
+    <div id="chat-bar">
+      <input type="text" id="chat-input" placeholder="Type a message to Ava..." onkeydown="if(event.key==='Enter')sendChatMessage()">
+      <button id="chat-send" onclick="sendChatMessage()">Send</button>
+    </div>
+  </div>
 
   <script src="https://unpkg.com/@daily-co/daily-js"></script>
   <script>
@@ -108,13 +159,14 @@
         console.log("✅ Conversation created:", conversationId);
 
         document.getElementById("tavus-loading").style.display = "none";
-        document.getElementById("tavus-video").style.display = "block";
+        document.getElementById("tavus-call").style.display = "flex";
 
         callFrame = window.Daily.createFrame(
           document.getElementById("tavus-video"),
           {
             iframeStyle: { width: "100%", height: "100%", border: "0" },
-            showLeaveButton: true
+            showLeaveButton: false,
+            showFullscreenButton: false
           }
         );
 
@@ -128,7 +180,7 @@
         });
 
         callFrame.on("left-meeting", function() {
-          document.getElementById("tavus-video").style.display = "none";
+          document.getElementById("tavus-call").style.display = "none";
           document.getElementById("tavus-start").style.display = "flex";
           if (callFrame) { callFrame.destroy(); callFrame = null; }
         });
@@ -144,6 +196,48 @@
         document.getElementById("tavus-start").style.display = "flex";
         alert("Sorry, couldn't connect. Please try again.");
       });
+    }
+
+    // Custom controls
+    var micOn = true;
+    var camOn = true;
+
+    function toggleMic() {
+      if (!callFrame) return;
+      micOn = !micOn;
+      callFrame.setLocalAudio(micOn);
+      document.querySelector('[onclick="toggleMic()"]').textContent = micOn ? "🎤 Mute" : "🎤 Unmute";
+    }
+
+    function toggleCam() {
+      if (!callFrame) return;
+      camOn = !camOn;
+      callFrame.setLocalVideo(camOn);
+      document.querySelector('[onclick="toggleCam()"]').textContent = camOn ? "📷 Camera" : "📷 Camera Off";
+    }
+
+    function leaveCall() {
+      if (!callFrame) return;
+      callFrame.leave();
+    }
+
+    // Send typed message to Ava
+    function sendChatMessage() {
+      var input = document.getElementById("chat-input");
+      var text = input.value.trim();
+      if (!text || !callFrame || !conversationId) return;
+
+      callFrame.sendAppMessage({
+        message_type: "conversation",
+        event_type: "conversation.respond",
+        conversation_id: conversationId,
+        properties: {
+          text: text
+        }
+      }, "*");
+
+      console.log("💬 Sent chat message:", text);
+      input.value = "";
     }
 
     function handleToolCall(msg) {
@@ -194,6 +288,9 @@
       }, "*");
       console.log("📤 Sent echo:", text.substring(0, 100));
     }
+  </script>
+</body>
+</html>
   </script>
 </body>
 </html>
