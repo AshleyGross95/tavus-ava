@@ -110,10 +110,14 @@
     var PERSONA_ID = "pc4cf52bed59";
     var REPLICA_ID = "r4317e64d25a";
 
+    // =============================================
+    // TOOL ENDPOINTS — generate_use_cases now hits
+    // Cloudflare Worker instead of n8n + Claude Opus
+    // =============================================
     var TOOL_ENDPOINTS = {
       "get_available_times": "https://ashleyg89.app.n8n.cloud/webhook/calendly-availability",
       "book_demo_meeting":   "https://ashleyg89.app.n8n.cloud/webhook/calendly-book",
-      "generate_use_cases":  "https://ashleyg89.app.n8n.cloud/webhook/generate-use-cases"
+      "generate_use_cases":  "https://divine-heart-9c50openai-proxy.ashleyannagross.workers.dev/api/generate-use-cases"
     };
 
     var callFrame = null;
@@ -198,7 +202,6 @@
       });
     }
 
-    // Custom controls
     var micOn = true;
     var camOn = true;
 
@@ -221,7 +224,6 @@
       callFrame.leave();
     }
 
-    // Send typed message to Ava
     function sendChatMessage() {
       var input = document.getElementById("chat-input");
       var text = input.value.trim();
@@ -266,10 +268,10 @@
         return ct.indexOf("application/json") !== -1 ? res.json() : res.text();
       })
       .then(function(result) {
-        console.log("✅ N8N response for " + toolName + ":", result);
+        console.log("✅ Response for " + toolName + ":", result);
         var text;
         if (typeof result === "string") { text = result; }
-        else { text = result.message || result.response || result.text || result.output || (result.data ? (typeof result.data === "string" ? result.data : JSON.stringify(result.data)) : JSON.stringify(result)); }
+        else { text = result.result || result.message || result.response || result.text || result.output || (result.data ? (typeof result.data === "string" ? result.data : JSON.stringify(result.data)) : JSON.stringify(result)); }
         sendEcho(text);
       })
       .catch(function(err) {
@@ -288,9 +290,6 @@
       }, "*");
       console.log("📤 Sent echo:", text.substring(0, 100));
     }
-  </script>
-</body>
-</html>
   </script>
 </body>
 </html>
