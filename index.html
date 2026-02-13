@@ -111,13 +111,15 @@
     var REPLICA_ID = "r4317e64d25a";
 
     // =============================================
-    // TOOL ENDPOINTS — generate_use_cases now hits
-    // Cloudflare Worker instead of n8n + Claude Opus
+    // ALL TOOL ENDPOINTS NOW ON CLOUDFLARE WORKER
+    // n8n is fully removed 🎉
     // =============================================
+    var WORKER_BASE = "https://divine-heart-9c50openai-proxy.ashleyannagross.workers.dev";
+
     var TOOL_ENDPOINTS = {
-      "get_available_times": "https://ashleyg89.app.n8n.cloud/webhook/calendly-availability",
-      "book_demo_meeting":   "https://ashleyg89.app.n8n.cloud/webhook/calendly-book",
-      "generate_use_cases":  "https://divine-heart-9c50openai-proxy.ashleyannagross.workers.dev/api/generate-use-cases"
+      "get_available_times": WORKER_BASE + "/api/get-available-times",
+      "book_demo_meeting":   WORKER_BASE + "/api/book-demo-meeting",
+      "generate_use_cases":  WORKER_BASE + "/api/generate-use-cases"
     };
 
     var callFrame = null;
@@ -136,7 +138,7 @@
         body: JSON.stringify({
           persona_id: PERSONA_ID,
           replica_id: REPLICA_ID,
-          conversation_name: "Website Visitor — " + new Date().toLocaleString(),
+          conversation_name: "Website Visitor – " + new Date().toLocaleString(),
           conversational_context: "The visitor just clicked to talk to Ava on aiworkforceacademy.io. They are likely interested in learning about the AI Builder Program.",
           custom_greeting: "Hey there! I'm Ava from AI Workforce Academy. I help people figure out if our AI Builder Program could be a good fit... and I tell the occasional bad joke along the way. What brings you here today?",
           properties: {
